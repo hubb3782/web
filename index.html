@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素秘境 · Pixel Realm</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.06);
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── 粒子背景 ── */
+  #particles {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: drift var(--dur) linear infinite;
+    animation-delay: var(--delay);
+    opacity: 0;
+  }
+  @keyframes drift {
+    0%   { opacity: 0; transform: translateY(0) scale(0); }
+    10%  { opacity: var(--op); }
+    85%  { opacity: var(--op); }
+    100% { opacity: 0; transform: translateY(calc(-100vh - 80px)) scale(1); }
+  }
+
+  /* ── 主容器 ── */
+  .main {
+    position: relative; z-index: 1;
+    max-width: 900px; margin: 0 auto;
+    padding: 50px 24px 60px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  /* ── 标题 ── */
+  .hero { text-align: center; margin-bottom: 50px; }
+  .hero-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 50px;
+    color: #8b5cf6;
+    font-size: 12px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 54px);
+    font-weight: 800;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #e2e8f0, #a78bfa 40%, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .hero .line {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    margin: 0 auto 16px; border-radius: 1px;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 15px; letter-spacing: 2px;
+  }
+
+  /* ── 导航卡片 ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 50px;
+  }
+  .card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 34px 24px 26px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    overflow: hidden;
+    text-align: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity 0.4s;
+    border-radius: 20px;
+  }
+  .card:nth-child(1)::before { background: radial-gradient(circle at 50% 0%, rgba(139,92,246,0.15), transparent 70%); }
+  .card:nth-child(2)::before { background: radial-gradient(circle at 50% 0%, rgba(6,182,212,0.15), transparent 70%); }
+  .card:nth-child(3)::before { background: radial-gradient(circle at 50% 0%, rgba(245,158,11,0.15), transparent 70%); }
+  .card:nth-child(4)::before { background: radial-gradient(circle at 50% 0%, rgba(244,63,94,0.15), transparent 70%); }
+
+  .card:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.12); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .card:active { transform: scale(0.97); }
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 36px; margin-bottom: 14px;
+    display: block; transition: transform 0.4s;
+  }
+  .card:hover .card-icon { transform: scale(1.15) rotate(-5deg); }
+
+  .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; letter-spacing: 1px; }
+  .card span.tag { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+  .card:nth-child(1) h3 { color: #a78bfa; }
+  .card:nth-child(2) h3 { color: #22d3ee; }
+  .card:nth-child(3) h3 { color: #fbbf24; }
+  .card:nth-child(4) h3 { color: #fb7185; }
+
+  /* ── 底部 ── */
+  .footer-note {
+    color: rgba(255,255,255,0.1);
+    font-size: 11px; letter-spacing: 3px;
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  暗室照片 Overlay                       */
+  /* ═══════════════════════════════════════ */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0);
+    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.5s;
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+  }
+  .overlay.active {
+    background: rgba(0,0,0,0.9);
+    pointer-events: auto;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .darkroom {
+    position: relative;
+    width: min(420px, 90vw);
+    opacity: 0;
+    transform: scale(0.8) translateY(40px);
+    transition: all 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .overlay.active .darkroom {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  /* 暗室红灯 */
+  .red-light {
+    position: absolute;
+    top: -55px; left: 50%;
+    transform: translateX(-50%);
+    width: 8px; height: 8px;
+    background: #ff1a1a;
+    border-radius: 50%;
+    box-shadow: 0 0 16px 6px rgba(255,20,20,0.55),
+                0 0 48px 16px rgba(255,20,20,0.2),
+                0 0 100px 32px rgba(255,20,20,0.08);
+    animation: redPulse 2s ease-in-out infinite;
+  }
+  @keyframes redPulse {
+    0%, 100% { box-shadow: 0 0 16px 6px rgba(255,20,20,0.55), 0 0 48px 16px rgba(255,20,20,0.2); }
+    50%      { box-shadow: 0 0 24px 10px rgba(255,20,20,0.7), 0 0 64px 24px rgba(255,20,20,0.3); }
+  }
+
+  /* 复古相框 */
+  .photo-frame {
+    position: relative;
+    background: #fafaf7;
+    border-radius: 5px;
+    padding: 12px 12px 46px 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.25), 0 16px 48px rgba(0,0,0,0.45);
+    transform: rotate(-1deg);
+  }
+  .photo-frame::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: 5px;
+    background: linear-gradient(135deg, rgba(0,0,0,0.04), transparent 50%, rgba(0,0,0,0.08));
+    pointer-events: none;
+  }
+
+  /* 照片区域 — 显影动画 */
+  .photo-inner {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: #1a1a1a;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .photo-inner img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    /* 未显影：过曝白色 */
+    filter: brightness(18) contrast(0.4) saturate(0);
+    transition: filter 2.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .photo-inner.developed img {
+    filter: brightness(1) contrast(1) saturate(1);
+  }
+
+  /* 显影液流动层 */
+  .developer-bath {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.95) 0%,
+      rgba(255,240,215,0.5) 30%,
+      rgba(255,255,255,0.08) 70%,
+      transparent 100%
+    );
+    transform: translateY(-100%);
+    transition: transform 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none; z-index: 2;
+  }
+  .photo-inner.developed .developer-bath {
+    transform: translateY(100%);
+  }
+
+  /* 相纸文字 */
+  .caption {
+    position: absolute; bottom: 12px; left: 0; right: 0;
+    text-align: center;
+    font-family: "Georgia", "Noto Serif SC", "STSong", serif;
+    font-size: 12px;
+    color: #a8a29e;
+    letter-spacing: 2px;
+    opacity: 0;
+    transition: opacity 0.8s 2s;
+  }
+  .overlay.active .caption { opacity: 1; }
+
+  /* 关闭按钮 */
+  .close-btn {
+    position: absolute; top: -46px; right: 0;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .close-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.35);
+    color: #fff;
+  }
+
+  /* ── 响应式 ── */
+  @media (max-width: 600px) {
+    .main { padding: 36px 14px 50px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { padding: 24px 12px 18px; border-radius: 16px; }
+    .card-icon { font-size: 30px; margin-bottom: 10px; }
+    .card h3 { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 背景粒子 -->
+<div id="particles"></div>
+
+<!-- ═══ 主页 ═══ -->
+<div class="main" id="mainPage">
+  <section class="hero">
+    <div class="hero-badge">✦ PIXEL REALM ✦</div>
+    <h1>像素秘境</h1>
+    <div class="line"></div>
+    <p>每一次点击，都是一场奇遇</p>
+  </section>
+
+  <nav class="grid">
+    <div class="card" onclick="openDarkroom()">
+      <span class="card-icon">📷</span>
+      <h3>暗室显影</h3>
+      <span class="tag">Darkroom</span>
+    </div>
+    <div class="card" onclick="void(0)">
+      <span class="card-icon">🎨</span>
+      <h3>创意画廊</h3>
+      <span class="tag">Gallery</span>
+    </div>
+    <div class="card" onclick="void(0)">
+      <span class="card-icon">✍️</span>
+      <h3>留声笔记</h3>
+      <span class="tag">Notes</span>
+    </div>
+    <div class="card" onclick="void(0)">
+      <span class="card-icon">🔮</span>
+      <h3>关于我</h3>
+      <span class="tag">About</span>
+    </div>
+  </nav>
+
+  <div class="footer-note">CURIOUS · CREATIVE · INFINITE</div>
+</div>
+
+<!-- ═══ 暗室 Overlay ═══ -->
+<div class="overlay" id="darkroomOverlay" onclick="if(event.target===this)closeDarkroom()">
+  <div class="darkroom" onclick="event.stopPropagation()">
+    <button class="close-btn" onclick="closeDarkroom()" aria-label="关闭">✕</button>
+    <div class="red-light"></div>
+    <div class="photo-frame">
+      <div class="photo-inner" id="photoInner">
+        <img src="pp.jpg" alt="显影照片">
+        <div class="developer-bath"></div>
+      </div>
+      <div class="caption">▲ 显影完成 ▲</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ── 背景粒子生成 ──
+  var pc = document.getElementById('particles');
+  for (var i = 0; i < 60; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    var s = Math.random() * 3 + 1;
+    p.style.cssText =
+      'width:' + s + 'px; height:' + s + 'px;' +
+      'left:' + (Math.random()*100) + '%;' +
+      'top:' + (Math.random()*100) + '%;' +
+      '--dur:' + (Math.random()*12+8) + 's;' +
+      '--delay:' + (Math.random()*10) + 's;' +
+      '--op:' + (Math.random()*0.5+0.2) + ';';
+    pc.appendChild(p);
+  }
+
+  // ── 暗室显影 ──
+  window.openDarkroom = function() {
+    var o = document.getElementById('darkroomOverlay');
+    var inner = document.getElementById('photoInner');
+    o.classList.add('active');
+    inner.classList.remove('developed');
+    setTimeout(function(){ inner.classList.add('developed'); }, 400);
+  };
+
+  window.closeDarkroom = function() {
+    document.getElementById('darkroomOverlay').classList.remove('active');
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDarkroom();
+  });
+})();
+</script>
+
+</body>
+</html>
