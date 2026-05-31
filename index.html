@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>朝花夕拾</title>
+<style>
+  :root {
+    --bg: #1a1218;
+    --surface: rgba(255,240,245,0.04);
+    --border: rgba(255,200,210,0.08);
+    --text: #f0e0e0;
+    --muted: #a09098;
+    --rose: #e8a0b4;
+    --gold: #d4a574;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: 90px; /* 为底部播放器留空间 */
+  }
+
+  /* ── 背景星光 ── */
+  #starDots {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .star-dot {
+    position: absolute;
+    width: var(--sz); height: var(--sz);
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: twinkle var(--t) ease-in-out infinite;
+    animation-delay: var(--td);
+    box-shadow: 0 0 var(--glow) var(--glow2) rgba(255,220,200,0.6);
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.05; transform: scale(0.8); }
+    30% { opacity: var(--pk); transform: scale(1.3); }
+    50% { opacity: 0.1; transform: scale(1); }
+    70% { opacity: var(--pk); transform: scale(1.2); }
+  }
+
+  /* ── 涟漪画布 ── */
+  #rippleCanvas {
+    position: fixed; inset: 0; z-index: 2;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+
+  /* ── 花瓣 ── */
+  #petals {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  }
+  .petal {
+    position: absolute;
+    animation: fall var(--dur) linear infinite;
+    animation-delay: var(--delay);
+    opacity: 0;
+    font-size: var(--size);
+  }
+  /* 快速花瓣：延迟短，立刻出现 */
+  .petal.fast {
+    animation: fallFast var(--dur) linear infinite;
+  }
+  @keyframes fall {
+    0%   { opacity: 0; transform: translateY(-40px) rotate(0deg) translateX(0px); }
+    3%   { opacity: 0.7; }
+    85%  { opacity: 0.6; }
+    95%  { opacity: 0.2; }
+    100% { opacity: 0; transform: translateY(calc(100vh + 40px)) rotate(var(--rot)) translateX(var(--drift)); }
+  }
+  @keyframes fallFast {
+    0%   { opacity: 0; transform: translateY(-30px) rotate(0deg) translateX(0px); }
+    2%   { opacity: 0.8; }
+    85%  { opacity: 0.6; }
+    95%  { opacity: 0.2; }
+    100% { opacity: 0; transform: translateY(calc(100vh + 40px)) rotate(var(--rot)) translateX(var(--drift)); }
+  }
+
+  /* ── 落花堆积层（底部花毯）── */
+  #fallenCarpet {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1;
+    pointer-events: none;
+    height: 80px;
+    overflow: hidden;
+  }
+  .fallen-petal {
+    position: absolute; bottom: 0;
+    font-size: var(--size);
+    opacity: var(--op);
+    animation: gentleSway var(--sway) ease-in-out infinite;
+    animation-delay: var(--swdelay);
+    transform: rotate(var(--rot));
+  }
+  @keyframes gentleSway {
+    0%, 100% { transform: rotate(var(--rot)) translateX(0); }
+    25% { transform: rotate(calc(var(--rot) + 3deg)) translateX(2px); }
+    75% { transform: rotate(calc(var(--rot) - 3deg)) translateX(-2px); }
+  }
+
+  /* ── 柔光 ── */
+  .ambient {
+    position: fixed; pointer-events: none; z-index: 0;
+    border-radius: 50%; filter: blur(140px); opacity: 0.12;
+  }
+  .ambient-1 {
+    top: -15%; left: -10%;
+    width: 500px; height: 500px;
+    background: #e8a0b4;
+    animation: breathe 6s ease-in-out infinite;
+  }
+  .ambient-2 {
+    bottom: -15%; right: -10%;
+    width: 400px; height: 400px;
+    background: #d4a574;
+    animation: breathe 8s ease-in-out infinite reverse;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.1; }
+    50% { transform: scale(1.25); opacity: 0.16; }
+  }
+
+  /* ── 主容器 ── */
+  .main {
+    position: relative; z-index: 1;
+    max-width: 860px; margin: 0 auto;
+    padding: 50px 24px 40px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  /* ── 标题 ── */
+  .hero { text-align: center; margin-bottom: 50px; }
+  .hero .kiss {
+    display: inline-block;
+    font-size: 13px; letter-spacing: 4px;
+    color: var(--rose);
+    border: 1px solid rgba(232,160,180,0.25);
+    border-radius: 50px;
+    padding: 3px 18px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", "STSong", serif;
+    font-size: clamp(38px, 7vw, 60px);
+    font-weight: 400;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, #f5d0d8 0%, #e8a0b4 30%, #d4a574 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .hero .sub {
+    font-size: 12px; color: rgba(200,170,180,0.5);
+    letter-spacing: 4px;
+    font-style: italic;
+  }
+  .hero .hr {
+    width: 48px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rose), transparent);
+    margin: 18px auto 16px;
+  }
+  .hero .verse {
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-size: 14px; color: rgba(200,168,180,0.5);
+    letter-spacing: 3px; line-height: 2;
+  }
+
+  /* ── 卡片 ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 40px;
+  }
+  .card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px 20px 26px;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    overflow: hidden;
+    text-align: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: 18px;
+    opacity: 0; transition: opacity 0.5s;
+  }
+  .card:nth-child(1)::after { background: radial-gradient(circle at 50% 0%, rgba(200,120,150,0.12), transparent 70%); }
+  .card:nth-child(2)::after { background: radial-gradient(circle at 50% 0%, rgba(210,160,100,0.12), transparent 70%); }
+  .card:nth-child(3)::after { background: radial-gradient(circle at 50% 0%, rgba(200,140,160,0.12), transparent 70%); }
+  .card:nth-child(4)::after { background: radial-gradient(circle at 50% 0%, rgba(240,180,190,0.12), transparent 70%); }
+  .card:hover::after, .card:active::after { opacity: 1; }
+  .card:hover { transform: translateY(-6px); border-color: rgba(255,200,210,0.15); box-shadow: 0 16px 48px rgba(0,0,0,0.35); }
+  .card:active { transform: scale(0.97); }
+
+  .card-icon { font-size: 32px; margin-bottom: 14px; display: block; transition: transform 0.5s; }
+  .card:hover .card-icon { transform: scale(1.12) rotate(-3deg); }
+  .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; letter-spacing: 2px; }
+  .card .tag { font-size: 11px; letter-spacing: 2px; color: var(--muted); }
+
+  .card:nth-child(1) h3 { color: #e0a0b0; }
+  .card:nth-child(2) h3 { color: #d4a574; }
+  .card:nth-child(3) h3 { color: #e0b0c0; }
+  .card:nth-child(4) h3 { color: #f0c0d0; }
+
+  .footer-note {
+    color: rgba(200,170,180,0.15);
+    font-size: 10px; letter-spacing: 4px;
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  Overlay 通用                           */
+  /* ═══════════════════════════════════════ */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(10,6,8,0);
+    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.5s;
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+  }
+  .overlay.active {
+    background: rgba(12,6,10,0.92);
+    pointer-events: auto;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .overlay .panel {
+    opacity: 0;
+    transform: scale(0.85) translateY(30px);
+    transition: all 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    width: min(440px, 90vw);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .overlay.active .panel { opacity: 1; transform: scale(1) translateY(0); }
+
+  .overlay .close {
+    position: absolute; top: -46px; right: 0;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,200,210,0.25);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,200,210,0.7);
+    font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    z-index: 10;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .overlay .close:hover { background: rgba(255,200,210,0.15); color: #fff; border-color: rgba(255,200,210,0.5); }
+
+  /* 返回按钮（面板内左上角，明显可见） */
+  .overlay .back-btn {
+    position: absolute; top: 10px; left: 10px;
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1px solid rgba(255,200,210,0.25);
+    background: rgba(20,12,16,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: rgba(255,210,220,0.8);
+    font-size: 13px; letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 20;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    white-space: nowrap;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .overlay .back-btn:hover {
+    background: rgba(30,14,20,0.85);
+    color: #fff;
+    border-color: rgba(255,200,210,0.5);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+
+  .overlay .panel::-webkit-scrollbar { width: 4px; }
+  .overlay .panel::-webkit-scrollbar-thumb { background: rgba(255,200,210,0.2); border-radius: 2px; }
+
+  /* ═══════════════════════════════════════ */
+  /*  暗室显影 (pp.jpg)                       */
+  /* ═══════════════════════════════════════ */
+  .darkroom .red-light {
+    width: 8px; height: 8px;
+    background: #ff1a1a;
+    border-radius: 50%;
+    margin: 0 auto 22px;
+    box-shadow: 0 0 16px 6px rgba(255,20,20,0.5),
+                0 0 44px 16px rgba(255,20,20,0.18),
+                0 0 90px 30px rgba(255,20,20,0.07);
+    animation: redPulse 2s ease-in-out infinite;
+  }
+  @keyframes redPulse {
+    0%, 100% { box-shadow: 0 0 16px 6px rgba(255,20,20,0.5), 0 0 44px 16px rgba(255,20,20,0.18); }
+    50%      { box-shadow: 0 0 26px 10px rgba(255,20,20,0.68), 0 0 60px 24px rgba(255,20,20,0.3); }
+  }
+  .darkroom .clothesline {
+    display: flex; justify-content: center; align-items: flex-start;
+    margin-bottom: 6px; position: relative;
+  }
+  .darkroom .clothespin {
+    width: 10px; height: 22px;
+    background: linear-gradient(180deg, #c4a882, #a0845c);
+    border-radius: 3px 3px 1px 1px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .darkroom .clothespin::after {
+    content: '';
+    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    width: 14px; height: 2px;
+    background: #8a6e4a;
+    border-radius: 1px;
+  }
+  .darkroom .line-left, .darkroom .line-right {
+    position: absolute; top: 6px;
+    height: 1px; background: rgba(180,150,120,0.5);
+    width: calc(50% - 20px);
+  }
+  .darkroom .line-left { left: 0; }
+  .darkroom .line-right { right: 0; }
+  .darkroom .frame {
+    background: #fafaf7;
+    border-radius: 3px;
+    padding: 14px 14px 52px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.25), 0 20px 50px rgba(0,0,0,0.4);
+    transform: rotate(-0.6deg);
+    position: relative;
+  }
+  .darkroom .frame-corner {
+    position: absolute; width: 18px; height: 18px;
+    border-color: rgba(180,150,120,0.35);
+    border-style: solid; z-index: 3;
+    pointer-events: none;
+  }
+  .darkroom .corner-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; border-radius: 2px 0 0 0; }
+  .darkroom .corner-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; border-radius: 0 2px 0 0; }
+  .darkroom .corner-bl { bottom: 44px; left: 8px; border-width: 0 0 2px 2px; border-radius: 0 0 0 2px; }
+  .darkroom .corner-br { bottom: 44px; right: 8px; border-width: 0 2px 2px 0; border-radius: 0 0 2px 0; }
+  .darkroom .pressed-flower {
+    position: absolute; z-index: 3; pointer-events: none;
+    font-size: 20px; opacity: 0.5;
+  }
+  .darkroom .flower-1 { bottom: 10px; right: 14px; transform: rotate(15deg); font-size: 22px; }
+  .darkroom .flower-2 { top: 6px; right: 22px; transform: rotate(-20deg); font-size: 14px; opacity: 0.35; }
+  .darkroom .flower-3 { bottom: 12px; left: 12px; transform: rotate(-10deg); font-size: 16px; opacity: 0.4; }
+  .darkroom .date-stamp {
+    position: absolute; bottom: 14px; right: 14px;
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 10px; color: rgba(160,120,100,0.6);
+    letter-spacing: 1px; z-index: 3;
+  }
+  .darkroom .frame-inner {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: #1a1a1a;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .darkroom .frame-inner img {
+    width: 100%; height: 100%;
+    object-fit: contain; display: block;
+    filter: brightness(18) contrast(0.4) saturate(0);
+    transition: filter 2.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .darkroom .frame-inner.dev img { filter: brightness(1) contrast(1) saturate(1); }
+  .darkroom .bath {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom,
+      rgba(255,255,255,0.95), rgba(255,240,215,0.5) 30%,
+      rgba(255,255,255,0.08) 70%, transparent);
+    transform: translateY(-100%);
+    transition: transform 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none; z-index: 2;
+  }
+  .darkroom .frame-inner.dev .bath { transform: translateY(100%); }
+  .darkroom .sparkles {
+    position: absolute; inset: 0; z-index: 4;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.6s 1.5s;
+  }
+  .darkroom .frame-inner.dev .sparkles { opacity: 1; }
+  .darkroom .spark {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    animation: spark var(--sd) ease-out var(--sdelay) infinite;
+    opacity: 0;
+  }
+  @keyframes spark {
+    0% { opacity: 0; transform: translate(0,0) scale(0); }
+    20% { opacity: 0.9; }
+    100% { opacity: 0; transform: translate(var(--sx),var(--sy)) scale(1.5); }
+  }
+  .darkroom .film-strip {
+    display: flex; justify-content: center; gap: 6px;
+    padding: 4px 0; opacity: 0.25;
+  }
+  .darkroom .film-strip.top { margin-bottom: 4px; }
+  .darkroom .film-strip.bottom { margin-top: 4px; }
+  .darkroom .film-perf {
+    width: 8px; height: 6px;
+    background: rgba(160,130,110,0.5);
+    border-radius: 2px;
+  }
+  .darkroom .cap {
+    text-align: center; margin-top: 14px;
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 13px; color: rgba(200,170,180,0.7);
+    letter-spacing: 3px;
+  }
+
+  /* 暗室轮播 */
+  .carousel-viewport {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    touch-action: pan-y pinch-zoom;
+    background: #111;
+  }
+  .carousel-track {
+    display: flex;
+    transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+    align-items: center;
+  }
+  .carousel-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .carousel-slide .frame-inner {
+    /* 不设固定宽高比，让图片自由展示 */
+    max-height: 55vh;
+    width: 100%;
+    background: #0d0d0d;
+    border-radius: 1px;
+    overflow: hidden;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .carousel-slide .frame-inner img {
+    width: 100%; height: auto;
+    max-height: 55vh;
+    object-fit: contain; display: block;
+    filter: brightness(18) contrast(0.4) saturate(0);
+    transition: filter 2.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .carousel-slide .frame-inner.dev img {
+    filter: brightness(1) contrast(1) saturate(1);
+  }
+  /* 暗角遮罩，让照片边缘融入暗背景 */
+  .carousel-slide .vignette {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    box-shadow: inset 0 0 80px 30px rgba(0,0,0,0.6);
+    border-radius: 1px;
+  }
+  .carousel-slide .frame-inner.dev img {
+    filter: brightness(1) contrast(1) saturate(1);
+  }
+  .carousel-slide .bath {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom,
+      rgba(255,255,255,0.95), rgba(255,240,215,0.5) 30%,
+      rgba(255,255,255,0.08) 70%, transparent);
+    transform: translateY(-100%);
+    transition: transform 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none; z-index: 2;
+  }
+  .carousel-slide .frame-inner.dev .bath { transform: translateY(100%); }
+  .carousel-slide .sparkles {
+    position: absolute; inset: 0; z-index: 4;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.6s 1.5s;
+  }
+  .carousel-slide .frame-inner.dev .sparkles { opacity: 1; }
+  .carousel-slide .spark {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    animation: spark var(--sd) ease-out var(--sdelay) infinite;
+    opacity: 0;
+  }
+
+  /* 轮播导航 */
+  .carousel-nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-top: 14px;
+  }
+  .carousel-arrow {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(180,150,120,0.3);
+    background: rgba(255,255,255,0.04);
+    color: rgba(180,150,120,0.7);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .carousel-arrow:hover {
+    background: rgba(255,200,210,0.12);
+    border-color: rgba(200,160,140,0.5);
+    color: #e0c0c0;
+  }
+  .carousel-dots { display: flex; gap: 10px; }
+  .carousel-dots .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(180,150,120,0.25);
+    cursor: pointer;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .carousel-dots .dot.active {
+    background: #d4a574;
+    box-shadow: 0 0 8px rgba(212,165,116,0.35);
+  }
+
+  /* ═══════════════════════════════════════ */
+  /* ═══════════════════════════════════════ */
+  /*  创意画廊 (feng.jpg + cc.jpg 轮播)       */
+  /* ═══════════════════════════════════════ */
+  .gallery .art-frame {
+    background: linear-gradient(135deg, #1a1516, #151112);
+    border: 1px solid rgba(200,160,120,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 0 60px rgba(200,150,100,0.06);
+    position: relative;
+  }
+  .gallery .art-frame::before {
+    content: '';
+    position: absolute; inset: 6px;
+    border: 1px solid rgba(200,160,120,0.1);
+    border-radius: 8px;
+    pointer-events: none; z-index: 1;
+  }
+  .art-viewport { overflow: hidden; border-radius: 4px; touch-action: pan-y; }
+  .art-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+  }
+  .art-slide { flex: 0 0 100%; min-width: 0; }
+  .art-inner {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #0d0d0d;
+  }
+  .art-inner img {
+    width: 100%; height: auto;
+    max-height: 55vh;
+    object-fit: contain; display: block;
+    opacity: 0;
+    transform: scale(1.03);
+    transition: all 0.8s ease;
+  }
+  .art-inner.show img { opacity: 1; transform: scale(1); }
+  .art-inner .spotlight {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, transparent 40%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none; z-index: 2;
+    transition: opacity 0.6s 0.3s;
+  }
+  .art-inner.show .spotlight { opacity: 0; }
+
+  .art-nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; margin-top: 12px;
+  }
+  .art-arrow {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(200,160,120,0.25);
+    background: rgba(255,255,255,0.03);
+    color: rgba(200,160,120,0.6);
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  .art-arrow:hover { background: rgba(255,200,210,0.1); color: #e0c0c0; }
+  .art-dots { display: flex; gap: 8px; }
+  .art-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(180,150,120,0.2); cursor: pointer;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .art-dot.active { background: #d4a574; box-shadow: 0 0 6px rgba(212,165,116,0.3); }
+
+  .gallery .gallery-cap {
+    text-align: center; margin-top: 14px;
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 13px; color: rgba(200,170,150,0.7);
+    letter-spacing: 3px;
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  留声笔记 (黑胶 + 歌词)                   */
+  /* ═══════════════════════════════════════ */
+  .vinyl-overlay .player { display: flex; flex-direction: column; align-items: center; }
+  .vinyl-wrap {
+    position: relative;
+    width: 200px; height: 200px;
+    margin-bottom: 24px;
+  }
+  .vinyl {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at center,
+      #2a1a20 0%, #1a1014 8%,
+      #222 8.5%, #1a1014 9%,
+      #2a1a20 14%, #1a1014 14.5%,
+      #222 20%, #1a1014 20.5%,
+      #2a1a20 28%, #1a1014 28.5%,
+      #222 38%, #1a1014 38.5%,
+      #2a1a20 52%, #1a1014 52.5%,
+      #222 70%, #1a1014 70.5%);
+    animation: spin 4s linear infinite;
+    animation-play-state: paused;
+    box-shadow: 0 0 60px rgba(200,120,150,0.2), inset 0 0 30px rgba(0,0,0,0.4);
+    cursor: pointer;
+  }
+  .vinyl.playing { animation-play-state: running; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .vinyl-label {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8a0b4, #d4a574);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 10px; letter-spacing: 1px;
+    text-align: center; line-height: 1.4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+  .tonearm {
+    position: absolute; top: -20px; right: -10px;
+    width: 90px; height: 6px;
+    background: linear-gradient(90deg, #555, #888 40%, #aaa 50%, #666);
+    border-radius: 3px;
+    transform-origin: right center;
+    transform: rotate(-25deg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: transform 0.4s;
+  }
+  .tonearm::after {
+    content: '';
+    position: absolute; left: 0; top: -3px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #999;
+  }
+  .tonearm.active { transform: rotate(-10deg); }
+
+  .play-hint {
+    margin-bottom: 16px;
+    font-size: 13px; color: rgba(200,170,180,0.6);
+    letter-spacing: 2px;
+    cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s;
+  }
+  .play-hint:hover { color: var(--rose); }
+
+  .song-title {
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 20px; letter-spacing: 3px;
+    color: var(--rose); margin-bottom: 16px;
+  }
+  .song-artist {
+    font-size: 12px; color: rgba(200,170,180,0.5);
+    letter-spacing: 2px; margin-bottom: 20px;
+  }
+
+  .lyrics-box {
+    width: 100%; max-height: 240px;
+    overflow-y: auto;
+    text-align: center;
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 14px; line-height: 2.4;
+    color: rgba(220,190,200,0.75);
+    letter-spacing: 2px;
+    padding: 10px 0;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  }
+  .lyrics-box::-webkit-scrollbar { width: 2px; }
+  .lyrics-box::-webkit-scrollbar-thumb { background: rgba(200,170,180,0.15); border-radius: 1px; }
+
+  /* ═══════════════════════════════════════ */
+  /*  关于我 (emo.jpg)                        */
+  /* ═══════════════════════════════════════ */
+  .about-frame {
+    background: rgba(255,240,245,0.03);
+    border: 1px solid rgba(240,180,200,0.12);
+    border-radius: 16px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .about-frame img {
+    width: 100%; height: auto;
+    max-height: 55vh;
+    object-fit: contain; display: block;
+    border-radius: 8px;
+    background: #0d0d0d;
+    opacity: 0;
+    transform: scale(1.03);
+    transition: all 0.8s ease;
+  }
+  .about-frame.show img { opacity: 1; transform: scale(1); }
+  .about-cap {
+    text-align: center; margin-top: 12px;
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 13px; color: rgba(220,180,190,0.6);
+    letter-spacing: 3px;
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  底部音乐播放器 (高级)                    */
+  /* ═══════════════════════════════════════ */
+
+  /* 迷你播放栏 */
+  .mini-player {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+    height: 68px;
+    background: rgba(20,14,18,0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,200,210,0.1);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2),
+                height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mini-player.expanded {
+    height: 420px;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 20px 20px;
+    cursor: default;
+  }
+
+  /* 迷你栏 - 收起状态 */
+  .mini-info {
+    display: flex; align-items: center; gap: 12px;
+    flex: 1; min-width: 0;
+  }
+  .mini-cover {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #e8a0b4, #8b5cf6, #d4a574);
+    background-size: 200% 200%;
+    animation: coverShift 6s ease-in-out infinite;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 12px rgba(200,120,150,0.2);
+  }
+  @keyframes coverShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .mini-text {
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0;
+  }
+  .mini-title {
+    font-size: 14px; font-weight: 600;
+    color: #f0d8e0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mini-artist {
+    font-size: 11px; color: rgba(200,170,180,0.5);
+    letter-spacing: 1px;
+  }
+
+  .mini-controls {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .mini-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,200,210,0.08);
+    color: rgba(240,200,210,0.8);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mini-btn:hover { background: rgba(255,200,210,0.18); color: #fff; }
+  .mini-btn.play-btn {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #e8a0b4, #d4a574);
+    color: #fff;
+    font-size: 18px;
+    box-shadow: 0 4px 16px rgba(200,120,150,0.3);
+  }
+  .mini-btn.play-btn:hover { box-shadow: 0 6px 24px rgba(200,120,150,0.5); }
+
+  .mini-progress {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: rgba(255,255,255,0.06);
+  }
+  .mini-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #e8a0b4, #d4a574);
+    width: 0%;
+    transition: width 0.3s linear;
+    border-radius: 0 1px 1px 0;
+  }
+
+  /* 迷你栏 - 展开状态 */
+  .mini-player .expand-content {
+    display: none;
+  }
+  .mini-player.expanded .mini-info,
+  .mini-player.expanded .mini-controls,
+  .mini-player.expanded .mini-progress { display: none; }
+  .mini-player.expanded .expand-content {
+    display: flex; flex-direction: column;
+    height: 100%; overflow: hidden;
+  }
+
+  .expand-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .expand-header .now-playing-label {
+    font-size: 10px; letter-spacing: 3px;
+    color: rgba(200,170,180,0.4);
+    text-transform: uppercase;
+  }
+  .expand-collapse {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,200,210,0.15);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,200,210,0.6);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .expand-collapse:hover { background: rgba(255,200,210,0.12); color: #fff; }
+
+  /* 可视化频谱 */
+  .visualizer {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 3px;
+    height: 80px;
+    margin-bottom: 16px;
+    padding: 0 10px;
+  }
+  .vis-bar {
+    flex: 1; max-width: 8px;
+    background: linear-gradient(to top, #e8a0b4, #d4a574, #f0c8d0);
+    border-radius: 3px 3px 0 0;
+    transition: height 0.08s ease;
+    min-height: 3px;
+  }
+
+  /* 展开：大封面 + 信息 */
+  .expand-art {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 16px;
+  }
+  .expand-cover {
+    width: 80px; height: 80px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #e8a0b4, #8b5cf6, #d4a574);
+    background-size: 200% 200%;
+    animation: coverShift 6s ease-in-out infinite;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 4px 20px rgba(200,120,150,0.25);
+  }
+  .expand-info h4 {
+    font-size: 16px; font-weight: 600;
+    color: #f0d8e0; letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .expand-info p {
+    font-size: 12px; color: rgba(200,170,180,0.5);
+    letter-spacing: 1px;
+  }
+
+  /* 进度条 */
+  .progress-wrap {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .time {
+    font-size: 10px; color: rgba(200,170,180,0.4);
+    font-family: monospace;
+    min-width: 34px;
+  }
+  .progress-bar {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e8a0b4, #d4a574);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+  .progress-thumb {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    left: 0%;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  }
+  .progress-bar:hover .progress-thumb { opacity: 1; }
+
+  /* 播放控制按钮 */
+  .player-controls {
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px;
+    margin-bottom: 18px;
+  }
+  .ctrl-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: rgba(240,200,210,0.6);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ctrl-btn:hover { color: #fff; }
+  .ctrl-btn.main-play {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #e8a0b4, #d4a574);
+    color: #fff;
+    font-size: 22px;
+    box-shadow: 0 4px 20px rgba(200,120,150,0.35);
+  }
+  .ctrl-btn.main-play:hover {
+    box-shadow: 0 6px 30px rgba(200,120,150,0.55);
+    transform: scale(1.05);
+  }
+
+  /* 播放列表 */
+  .playlist-label {
+    font-size: 10px; letter-spacing: 3px;
+    color: rgba(200,170,180,0.35);
+    margin-bottom: 8px;
+  }
+  .playlist {
+    display: flex; flex-direction: column;
+    gap: 4px;
+    flex: 1; overflow-y: auto;
+    min-height: 0;
+  }
+  .playlist-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .playlist-item:hover { background: rgba(255,200,210,0.06); }
+  .playlist-item.active { background: rgba(200,120,150,0.12); }
+
+  .playlist-item .pl-num {
+    width: 24px; text-align: center;
+    font-size: 12px; color: rgba(200,170,180,0.4);
+    font-family: monospace;
+  }
+  .playlist-item.active .pl-num { color: var(--rose); }
+  .playlist-item .pl-info {
+    flex: 1; min-width: 0;
+  }
+  .playlist-item .pl-title {
+    font-size: 13px; color: #e0c8d0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .playlist-item.active .pl-title { color: #fff; font-weight: 600; }
+  .playlist-item .pl-artist {
+    font-size: 11px; color: rgba(200,170,180,0.4);
+  }
+  .playlist-item .pl-dur {
+    font-size: 11px; color: rgba(200,170,180,0.35);
+    font-family: monospace;
+  }
+  .playlist-item .pl-playing-icon {
+    color: var(--rose); font-size: 10px;
+    display: none;
+  }
+  .playlist-item.active .pl-playing-icon { display: inline; }
+  .playlist-item.active .pl-num { display: none; }
+
+  .playlist::-webkit-scrollbar { width: 2px; }
+  .playlist::-webkit-scrollbar-thumb { background: rgba(200,170,180,0.15); border-radius: 1px; }
+
+  /* ═══════════════════════════════════════ */
+  /*  作者头像（主页）                        */
+  /* ═══════════════════════════════════════ */
+  .author-badge {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px; cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    margin-top: 8px;
+  }
+  .author-badge:hover { transform: translateY(-4px); }
+  .author-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(232,160,180,0.4);
+    box-shadow: 0 0 30px rgba(200,120,150,0.25), 0 4px 16px rgba(0,0,0,0.3);
+    transition: all 0.4s;
+  }
+  .author-badge:hover .author-avatar {
+    border-color: rgba(232,160,180,0.7);
+    box-shadow: 0 0 40px rgba(200,120,150,0.4), 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .author-avatar img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .author-name {
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 18px; letter-spacing: 4px;
+    color: #e0b8c0;
+    transition: color 0.3s;
+  }
+  .author-badge:hover .author-name { color: #f0d0d8; }
+  .author-hint {
+    font-size: 10px; letter-spacing: 2px;
+    color: rgba(200,170,180,0.35);
+    transition: color 0.3s;
+  }
+  .author-badge:hover .author-hint { color: rgba(200,170,180,0.55); }
+
+  /* ═══════════════════════════════════════ */
+  /*  作者简介 Overlay                       */
+  /* ═══════════════════════════════════════ */
+  .author-panel { width: min(400px, 90vw); }
+
+  .author-hero {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 24px;
+  }
+  .author-avatar-lg {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(232,160,180,0.5);
+    box-shadow: 0 0 36px rgba(200,120,150,0.3);
+    margin-bottom: 14px;
+  }
+  .author-avatar-lg img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .author-name-lg {
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 24px; letter-spacing: 6px;
+    color: #e8a0b4;
+    margin-bottom: 8px;
+  }
+  .author-bio {
+    font-size: 12px; color: rgba(200,170,180,0.5);
+    letter-spacing: 2px; text-align: center; line-height: 2;
+  }
+  .author-cap {
+    text-align: center; margin-top: 14px;
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 13px; color: rgba(220,180,190,0.6);
+    letter-spacing: 3px;
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  小时候的合照                           */
+  /* ═══════════════════════════════════════ */
+  .childhood-wrap {
+    text-align: center; margin-bottom: 20px;
+  }
+  .childhood-label {
+    font-size: 11px; letter-spacing: 3px;
+    color: rgba(200,170,180,0.45);
+    margin-bottom: 10px;
+  }
+  .childhood-frame {
+    position: relative;
+    background: #fafaf6;
+    border-radius: 4px;
+    padding: 10px 10px 36px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2), 0 10px 30px rgba(0,0,0,0.3);
+    transform: rotate(1.5deg);
+    display: inline-block;
+    max-width: 85%;
+  }
+  .childhood-frame img {
+    width: 100%; height: auto;
+    max-height: 35vh;
+    object-fit: contain; display: block;
+    border-radius: 1px;
+  }
+  .childhood-vignette {
+    position: absolute; inset: 10px 10px 36px 10px;
+    box-shadow: inset 0 0 30px 10px rgba(0,0,0,0.15);
+    pointer-events: none; border-radius: 1px;
+  }
+  .childhood-cap {
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 11px; color: #a09088;
+    letter-spacing: 2px; margin-top: 8px;
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  视频封面卡片                           */
+  /* ═══════════════════════════════════════ */
+  .video-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .video-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(200,120,150,0.15); }
+  .video-card.hidden { display: none; }
+  .video-card-bg {
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #2a1a28 0%, #1a1520 40%, #1a1a24 100%);
+    position: relative;
+  }
+  .video-card-bg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(232,160,180,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 60%, rgba(212,165,116,0.1) 0%, transparent 40%);
+  }
+  .video-card-content {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .video-card-play {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: rgba(232,160,180,0.75);
+    color: #fff; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 28px rgba(200,120,150,0.35);
+    margin-bottom: 14px;
+    transition: transform 0.3s;
+  }
+  .video-card:hover .video-card-play { transform: scale(1.1); }
+  .video-card-title {
+    font-family: "STKaiti","KaiTi","Noto Serif SC",serif;
+    font-size: 16px; letter-spacing: 3px;
+    color: #e8b8c8;
+    margin-bottom: 4px;
+  }
+  .video-card-sub {
+    font-size: 10px; letter-spacing: 2px;
+    color: rgba(200,170,180,0.5);
+  }
+
+  /* ═══════════════════════════════════════ */
+  /*  视频播放器（播放后显示）                */
+  /* ═══════════════════════════════════════ */
+  .video-wrap {
+    display: none;
+    position: relative;
+    background: #0d0d0d;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(200,160,120,0.12);
+    margin-bottom: 20px;
+  }
+  .video-wrap.active { display: block; }
+  .video-wrap video {
+    width: 100%; display: block;
+    max-height: 50vh;
+    background: #000;
+  }
+
+  .video-controls {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 3;
+  }
+  .video-wrap.active:hover .video-controls,
+  .video-controls.show { opacity: 1; }
+
+  .vid-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,200,210,0.2);
+    background: rgba(0,0,0,0.4);
+    color: rgba(255,200,210,0.8);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .vid-btn:hover { background: rgba(255,200,210,0.2); color: #fff; }
+
+  .vid-progress-wrap {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .vid-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e8a0b4, #d4a574);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.15s linear;
+  }
+  .vid-time {
+    font-size: 10px; color: rgba(255,200,210,0.6);
+    font-family: monospace;
+  }
+
+  /* ── 响应式 ── */
+  @media (max-width: 600px) {
+    .main { padding: 30px 14px 30px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { padding: 22px 10px 16px; border-radius: 14px; }
+    .card-icon { font-size: 28px; margin-bottom: 10px; }
+    .card h3 { font-size: 14px; }
+    .hero h1 { font-size: 34px; }
+    .vinyl-wrap { width: 160px; height: 160px; }
+    .tonearm { width: 70px; right: -8px; top: -16px; }
+    .mini-player { height: 62px; padding: 0 14px; }
+    .mini-player.expanded { height: 380px; padding: 14px 14px 16px; }
+    body { padding-bottom: 80px; }
+    .mini-btn { width: 32px; height: 32px; font-size: 14px; }
+    .mini-btn.play-btn { width: 38px; height: 38px; }
+    .author-avatar { width: 60px; height: 60px; }
+    .author-avatar-lg { width: 72px; height: 72px; }
+    .childhood-frame { max-width: 90%; }
+    .video-card-play { width: 42px; height: 42px; font-size: 16px; }
+    .art-arrow { width: 28px; height: 28px; font-size: 16px; }
+    .overlay .back-btn { padding: 6px 14px; font-size: 11px; top: 6px; left: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 背景星光 -->
+<div id="starDots"></div>
+
+<!-- 涟漪画布 -->
+<canvas id="rippleCanvas"></canvas>
+
+<!-- 花瓣 -->
+<div id="petals"></div>
+
+<!-- 落花堆积 -->
+<div id="fallenCarpet"></div>
+
+<!-- 柔光 -->
+<div class="ambient ambient-1"></div>
+<div class="ambient ambient-2"></div>
+
+<!-- ═══ 主页 ═══ -->
+<div class="main" id="mainPage">
+  <section class="hero">
+    <div class="kiss">✦ 给特别的你 ✦</div>
+    <h1>朝花夕拾</h1>
+    <div class="hr"></div>
+    <p class="verse">花开花落自有时<br>朝花夕拾皆是诗</p>
+
+    <!-- 作者头像 -->
+    <div class="author-badge" onclick="openAuthor()">
+      <div class="author-avatar">
+        <img src="lulu.jpg" alt="噜噜">
+      </div>
+      <span class="author-name">噜 噜</span>
+      <span class="author-hint">点击查看简介</span>
+    </div>
+  </section>
+
+  <nav class="grid">
+    <div class="card" onclick="openPanel('darkroom')">
+      <span class="card-icon">📷</span>
+      <h3>暗室显影</h3>
+      <span class="tag">时光胶片</span>
+    </div>
+    <div class="card" onclick="openPanel('gallery')">
+      <span class="card-icon">🎨</span>
+      <h3>创意画廊</h3>
+      <span class="tag">珍藏瞬间</span>
+    </div>
+    <div class="card" onclick="openVinyl()">
+      <span class="card-icon">💿</span>
+      <h3>留声笔记</h3>
+      <span class="tag">听见心跳</span>
+    </div>
+    <div class="card" onclick="openPanel('about')">
+      <span class="card-icon">🔮</span>
+      <h3>关于我</h3>
+      <span class="tag">打开信封</span>
+    </div>
+  </nav>
+
+  <div class="footer-note">✦ MORNING BLOOMS · EVENING MEMORIES ✦</div>
+</div>
+
+<!-- ═══ 暗室显影 ═══ -->
+<div class="overlay" id="darkroomOv" onclick="if(event.target===this)closeAll()">
+  <div class="panel darkroom" onclick="event.stopPropagation()">
+    <button class="back-btn" onclick="closeAll()">← 返回</button>
+    <button class="close" onclick="closeAll()">✕</button>
+    <div class="red-light"></div>
+    <div class="film-strip top" id="filmTop"></div>
+    <div class="clothesline">
+      <span class="line-left"></span>
+      <span class="clothespin"></span>
+      <span class="line-right"></span>
+    </div>
+    <div class="frame">
+      <div class="frame-corner corner-tl"></div>
+      <div class="frame-corner corner-tr"></div>
+      <div class="frame-corner corner-bl"></div>
+      <div class="frame-corner corner-br"></div>
+      <span class="pressed-flower flower-1">🥀</span>
+      <span class="pressed-flower flower-2">🍂</span>
+      <span class="pressed-flower flower-3">🌿</span>
+      <span class="date-stamp">2026.05.30</span>
+      <!-- 轮播视口 -->
+      <div class="carousel-viewport" id="carouselViewport">
+        <div class="carousel-track" id="carouselTrack">
+          <div class="carousel-slide">
+            <div class="frame-inner dev-target">
+              <img src="pp.jpg" alt="照片1">
+              <div class="vignette"></div>
+              <div class="bath"></div>
+              <div class="sparkles"></div>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="frame-inner dev-target">
+              <img src="kk.jpg" alt="照片2">
+              <div class="bath"></div>
+              <div class="sparkles"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 轮播导航 -->
+      <div class="carousel-nav">
+        <button class="carousel-arrow prev" id="carPrev">‹</button>
+        <div class="carousel-dots" id="carDots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+        </div>
+        <button class="carousel-arrow next" id="carNext">›</button>
+      </div>
+    </div>
+    <div class="film-strip bottom" id="filmBtm"></div>
+    <div class="cap">▲ 每一帧，都是温柔的时光 ▲</div>
+  </div>
+</div>
+
+<!-- ═══ 创意画廊 ═══ -->
+<div class="overlay" id="galleryOv" onclick="if(event.target===this)closeAll()">
+  <div class="panel gallery" onclick="event.stopPropagation()">
+    <button class="back-btn" onclick="closeAll()">← 返回</button>
+    <button class="close" onclick="closeAll()">✕</button>
+    <div class="art-frame">
+      <div class="art-viewport" id="artViewport">
+        <div class="art-track" id="artTrack">
+          <div class="art-slide">
+            <div class="art-inner">
+              <img src="feng.jpg" alt="画廊1" loading="lazy">
+              <div class="spotlight"></div>
+            </div>
+          </div>
+          <div class="art-slide">
+            <div class="art-inner">
+              <img src="cc.jpg" alt="画廊2" loading="lazy">
+              <div class="spotlight"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="art-nav">
+        <button class="art-arrow" id="artPrev">‹</button>
+        <div class="art-dots" id="artDots">
+          <span class="art-dot active"></span>
+          <span class="art-dot"></span>
+        </div>
+        <button class="art-arrow" id="artNext">›</button>
+      </div>
+    </div>
+    <div class="gallery-cap">▲ 每一帧都是风景 ▲</div>
+  </div>
+</div>
+
+<!-- ═══ 留声笔记 ═══ -->
+<div class="overlay vinyl-overlay" id="vinylOv" onclick="if(event.target===this)closeVinyl()">
+  <div class="panel player" onclick="event.stopPropagation()">
+    <button class="back-btn" onclick="closeVinyl()">← 返回</button>
+    <button class="close" onclick="closeVinyl()">✕</button>
+    <div class="vinyl-wrap">
+      <div class="vinyl" id="vinylDisc"></div>
+      <div class="vinyl-label">恋人</div>
+      <div class="tonearm" id="tonearm"></div>
+    </div>
+    <div class="play-hint" id="playHint" onclick="toggleVinyl()">▶ 轻触黑胶，开始播放</div>
+    <div class="song-title">恋 人</div>
+    <div class="song-artist">李荣浩 · 词曲 / 刘嘉星</div>
+    <div class="lyrics-box" id="lyricsBox">
+      爱像是一场小雨<br>淅沥沥 淅沥沥<br>滴入我回忆<br><br>
+      爱又像一场旅行<br>走停停 走停停<br>忽然遇见你<br>停下了足迹<br><br>
+      是否还是不太喜欢吃香菜<br>到现在都没改<br>
+      那双原来最喜欢的匡威鞋带<br>现在却解不开<br><br>
+      那张磁带 一再 一再<br>它又再一次的卡带<br>
+      却还会再一遍 一遍<br>一遍又一遍听下来<br><br>
+      昨天的爱 已回不来<br>却依然在心里徘徊<br>却依然在心底徘徊<br><br>
+      爱又像一场旅行<br>走停停 走停停<br>忽然遇见你<br>停下了足迹<br><br>
+      是否还是不太喜欢吃香菜<br>到现在都没改<br>
+      那双原来最喜欢的匡威鞋带<br>现在却解不开<br><br>
+      那张磁带 一再 一再<br>它又再一次的卡带<br>
+      却还会再一遍 一遍<br>一遍又一遍听下来<br><br>
+      昨天的爱 已回不来<br>却依然在心里徘徊<br>却依然在心底徘徊<br><br>
+      凶手和恋人都喜欢事后回现场<br>看一看自己从前到底有多疯狂<br>
+      回忆里充满着罗曼蒂克的幻想<br>
+      那张磁带里藏着过往<br>播放了就会回到现场<br><br>
+      那张磁带 一再 一再<br>它又再一次的卡带<br>
+      却还会再一遍 一遍<br>一遍又一遍听下来<br><br>
+      昨天的爱 已回不来<br>却依然在心里徘徊<br>却依然在心底徘徊
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 关于我 ═══ -->
+<div class="overlay" id="aboutOv" onclick="if(event.target===this)closeAll()">
+  <div class="panel" onclick="event.stopPropagation()" style="width:min(380px, 90vw);">
+    <button class="back-btn" onclick="closeAll()">← 返回</button>
+    <button class="close" onclick="closeAll()">✕</button>
+    <div class="about-frame" id="aboutFrame">
+      <img src="emo.jpg" alt="关于我" loading="lazy">
+    </div>
+    <div class="about-cap">▲ 这 就 是 我 ▲</div>
+  </div>
+</div>
+
+<!-- ═══ 作者简介 ═══ -->
+<div class="overlay" id="authorOv" onclick="if(event.target===this)closeAll()">
+  <div class="panel author-panel" onclick="event.stopPropagation()">
+    <button class="back-btn" onclick="closeAll()">← 返回</button>
+    <button class="close" onclick="closeAll()">✕</button>
+
+    <!-- 头像 + 名称 -->
+    <div class="author-hero">
+      <div class="author-avatar-lg">
+        <img src="lulu.jpg" alt="噜噜">
+      </div>
+      <h2 class="author-name-lg">噜 噜</h2>
+      <p class="author-bio">记录生活的每一个瞬间<br>用镜头留住温柔时光</p>
+    </div>
+
+    <!-- 小时候的合照 -->
+    <div class="childhood-wrap">
+      <div class="childhood-label">📸 小时候的合照</div>
+      <div class="childhood-frame">
+        <img src="bubu.jpg" alt="小时候的合照">
+        <div class="childhood-vignette"></div>
+      </div>
+      <div class="childhood-cap">那年，我们在一起</div>
+    </div>
+
+    <!-- 视频封面卡片 -->
+    <div class="video-card" id="videoCard" onclick="toggleVideo()">
+      <div class="video-card-bg"></div>
+      <div class="video-card-content">
+        <div class="video-card-play">▶</div>
+        <h4 class="video-card-title">噜噜的时光影像</h4>
+        <p class="video-card-sub">点击播放 · 记录美好瞬间</p>
+      </div>
+    </div>
+
+    <!-- 视频播放器（播放后出现） -->
+    <div class="video-wrap" id="videoWrap">
+      <video id="luluVideo" src="lulu.mp4" preload="metadata" playsinline></video>
+      <div class="video-controls" id="videoControls">
+        <button class="vid-btn" id="vidPlayBtn" onclick="event.stopPropagation();toggleVideo()">⏸</button>
+        <div class="vid-progress-wrap" onclick="event.stopPropagation();seekVideo(event)">
+          <div class="vid-progress-fill" id="vidProgressFill"></div>
+        </div>
+        <span class="vid-time" id="vidTime">0:00</span>
+        <button class="vid-btn" onclick="event.stopPropagation();toggleMute()" id="vidMuteBtn">🔊</button>
+      </div>
+    </div>
+
+    <div class="author-cap">▲ 噜噜的空间 ▲</div>
+  </div>
+</div>
+
+<!-- ═══ 底部音乐播放器 ═══ -->
+<div class="mini-player" id="miniPlayer" onclick="expandPlayer()">
+  <div class="mini-progress"><div class="mini-progress-bar" id="miniProgressBar"></div></div>
+  <div class="mini-info">
+    <div class="mini-cover">🎵</div>
+    <div class="mini-text">
+      <span class="mini-title" id="miniTitle">恋人</span>
+      <span class="mini-artist" id="miniArtist">浪漫收藏集</span>
+    </div>
+  </div>
+  <div class="mini-controls" onclick="event.stopPropagation()">
+    <button class="mini-btn" onclick="prevTrack()" title="上一首">⏮</button>
+    <button class="mini-btn play-btn" id="miniPlayBtn" onclick="toggleMainPlay()">▶</button>
+    <button class="mini-btn" onclick="nextTrack()" title="下一首">⏭</button>
+  </div>
+
+  <!-- 展开内容 -->
+  <div class="expand-content">
+    <div class="expand-header">
+      <span class="now-playing-label">♪ 正在播放</span>
+      <button class="expand-collapse" onclick="event.stopPropagation();collapsePlayer()">▾</button>
+    </div>
+
+    <div class="visualizer" id="visualizer">
+      <!-- JS 生成频谱条 -->
+      <span class="vis-bar" style="height:8px"></span><span class="vis-bar" style="height:12px"></span>
+      <span class="vis-bar" style="height:6px"></span><span class="vis-bar" style="height:18px"></span>
+      <span class="vis-bar" style="height:4px"></span><span class="vis-bar" style="height:14px"></span>
+      <span class="vis-bar" style="height:8px"></span><span class="vis-bar" style="height:20px"></span>
+      <span class="vis-bar" style="height:10px"></span><span class="vis-bar" style="height:16px"></span>
+      <span class="vis-bar" style="height:6px"></span><span class="vis-bar" style="height:22px"></span>
+      <span class="vis-bar" style="height:12px"></span><span class="vis-bar" style="height:8px"></span>
+      <span class="vis-bar" style="height:18px"></span><span class="vis-bar" style="height:6px"></span>
+      <span class="vis-bar" style="height:14px"></span><span class="vis-bar" style="height:10px"></span>
+      <span class="vis-bar" style="height:20px"></span><span class="vis-bar" style="height:8px"></span>
+      <span class="vis-bar" style="height:12px"></span><span class="vis-bar" style="height:6px"></span>
+      <span class="vis-bar" style="height:16px"></span><span class="vis-bar" style="height:10px"></span>
+      <span class="vis-bar" style="height:24px"></span><span class="vis-bar" style="height:8px"></span>
+      <span class="vis-bar" style="height:18px"></span><span class="vis-bar" style="height:6px"></span>
+      <span class="vis-bar" style="height:14px"></span><span class="vis-bar" style="height:10px"></span>
+      <span class="vis-bar" style="height:22px"></span><span class="vis-bar" style="height:8px"></span>
+      <span class="vis-bar" style="height:12px"></span>
+    </div>
+
+    <div class="expand-art">
+      <div class="expand-cover">🎵</div>
+      <div class="expand-info">
+        <h4 id="expandTitle">恋人</h4>
+        <p id="expandArtist">浪漫收藏集</p>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <span class="time" id="curTime">0:00</span>
+      <div class="progress-bar" id="progressBar" onclick="seekTo(event)">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-thumb" id="progressThumb"></div>
+      </div>
+      <span class="time" id="durTime">0:00</span>
+    </div>
+
+    <div class="player-controls">
+      <button class="ctrl-btn" onclick="prevTrack()">⏮</button>
+      <button class="ctrl-btn main-play" id="mainPlayBtn" onclick="toggleMainPlay()">▶</button>
+      <button class="ctrl-btn" onclick="nextTrack()">⏭</button>
+    </div>
+
+    <div class="playlist-label">♪ 播放列表</div>
+    <div class="playlist" id="playlist">
+      <div class="playlist-item active" data-index="0" onclick="switchTrack(0)">
+        <span class="pl-num">01</span>
+        <span class="pl-playing-icon">♪</span>
+        <div class="pl-info">
+          <div class="pl-title">恋人</div>
+          <div class="pl-artist">浪漫收藏集</div>
+        </div>
+        <span class="pl-dur">--:--</span>
+      </div>
+      <div class="playlist-item" data-index="1" onclick="switchTrack(1)">
+        <span class="pl-num">02</span>
+        <span class="pl-playing-icon">♪</span>
+        <div class="pl-info">
+          <div class="pl-title">一路向北</div>
+          <div class="pl-artist">北方来信</div>
+        </div>
+        <span class="pl-dur">--:--</span>
+      </div>
+      <div class="playlist-item" data-index="2" onclick="switchTrack(2)">
+        <span class="pl-num">03</span>
+        <span class="pl-playing-icon">♪</span>
+        <div class="pl-info">
+          <div class="pl-title">多远都要在一起</div>
+          <div class="pl-artist">G.E.M. 邓紫棋</div>
+        </div>
+        <span class="pl-dur">--:--</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 音频 ═══ -->
+<audio id="bgAudio" src="恋人.mp3" preload="auto"></audio>
+<audio id="mainAudio" preload="auto"></audio>
+
+<script>
+(function(){
+  // ══════ 涟漪 + 光标光影（高亮版）══════
+  (function initRipple() {
+    var canvas = document.getElementById('rippleCanvas');
+    var ctx = canvas.getContext('2d');
+    var ripples = [];
+    var mouse = { x: -200, y: -200, prevX: -200, prevY: -200 };
+    var maxRipples = 100;
+    var lightTime = 0;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function addRipple(x, y, size, op) {
+      if (ripples.length >= maxRipples) ripples.splice(0, 5);
+      ripples.push({
+        x: x, y: y,
+        radius: 0,
+        maxRadius: size || 200 + Math.random() * 250,
+        opacity: op || 0.8 + Math.random() * 0.2,
+        speed: 2 + Math.random() * 2,
+        hue: Math.random() < 0.55 ? '255,200,210' : '240,190,150'
+      });
+    }
+
+    document.addEventListener('mousemove', function(e) {
+      mouse.prevX = mouse.x; mouse.prevY = mouse.y;
+      mouse.x = e.clientX; mouse.y = e.clientY;
+      var dx = mouse.x - mouse.prevX, dy = mouse.y - mouse.prevY;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist > 4) {
+        addRipple(mouse.x, mouse.y);
+        // 路径插值
+        if (dist > 20) {
+          var n = Math.floor(dist / 20);
+          for (var k = 1; k <= n; k++) {
+            var t = k/(n+1);
+            addRipple(mouse.prevX+dx*t, mouse.prevY+dy*t, 120+Math.random()*150, 0.6+Math.random()*0.25);
+          }
+        }
+      }
+    });
+
+    document.addEventListener('touchmove', function(e) {
+      var t = e.touches[0];
+      mouse.prevX = mouse.x; mouse.prevY = mouse.y;
+      mouse.x = t.clientX; mouse.y = t.clientY;
+      var dist = Math.sqrt(Math.pow(mouse.x-mouse.prevX,2)+Math.pow(mouse.y-mouse.prevY,2));
+      if (dist > 6) {
+        addRipple(mouse.x, mouse.y, 160+Math.random()*200, 0.7);
+        if (dist > 25) addRipple((mouse.x+mouse.prevX)/2, (mouse.y+mouse.prevY)/2, 100+Math.random()*120, 0.5);
+      }
+    }, {passive: true});
+
+    // 静止呼吸
+    setInterval(function() {
+      if (mouse.x > 0 && ripples.length < 15) {
+        addRipple(mouse.x+Math.random()*8-4, mouse.y+Math.random()*8-4, 80+Math.random()*50, 0.3+Math.random()*0.2);
+      }
+    }, 500);
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      lightTime += 0.03;
+
+      // ══ 光标光源 ══
+      if (mouse.x > 0 && mouse.y > 0) {
+        var mx = mouse.x, my = mouse.y;
+
+        // 亮核
+        var c1 = ctx.createRadialGradient(mx, my, 0, mx, my, 24);
+        c1.addColorStop(0, 'rgba(255,245,250,0.65)');
+        c1.addColorStop(0.2, 'rgba(255,220,235,0.4)');
+        c1.addColorStop(0.5, 'rgba(245,180,200,0.15)');
+        c1.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = c1; ctx.fillRect(mx-24, my-24, 48, 48);
+
+        // 中环
+        var c2 = ctx.createRadialGradient(mx, my, 12, mx, my, 90);
+        c2.addColorStop(0, 'rgba(240,200,210,0.2)');
+        c2.addColorStop(0.4, 'rgba(220,170,160,0.1)');
+        c2.addColorStop(0.7, 'rgba(200,140,140,0.04)');
+        c2.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = c2; ctx.fillRect(mx-90, my-90, 180, 180);
+
+        // 外环
+        var c3 = ctx.createRadialGradient(mx, my, 40, mx, my, 200);
+        c3.addColorStop(0, 'rgba(220,180,180,0.06)');
+        c3.addColorStop(0.5, 'rgba(200,150,140,0.025)');
+        c3.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = c3; ctx.fillRect(mx-200, my-200, 400, 400);
+
+        // 十字闪光线
+        var flicker = 0.18 + Math.sin(lightTime*4)*0.06 + Math.cos(lightTime*7)*0.04;
+        ctx.save();
+        ctx.globalAlpha = flicker;
+        ctx.strokeStyle = 'rgba(255,245,250,0.7)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(mx-45, my); ctx.lineTo(mx+45, my); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(mx, my-45); ctx.lineTo(mx, my+45); ctx.stroke();
+        ctx.restore();
+
+        // 绕行光点
+        ctx.save();
+        for (var s=0; s<6; s++) {
+          var ang = s*Math.PI/3 + lightTime*0.6;
+          var sx = mx + Math.cos(ang)*28, sy = my + Math.sin(ang)*28;
+          var dd = ctx.createRadialGradient(sx, sy, 0, sx, sy, 6);
+          dd.addColorStop(0, 'rgba(255,245,250,0.55)');
+          dd.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = dd; ctx.fillRect(sx-6, sy-6, 12, 12);
+        }
+        ctx.restore();
+      }
+
+      // 涟漪
+      for (var i=ripples.length-1; i>=0; i--) {
+        var r = ripples[i];
+        r.radius += r.speed;
+        var p = r.radius/r.maxRadius;
+        if (p>1) { ripples.splice(i,1); continue; }
+
+        var alpha;
+        if (p<0.15) alpha = r.opacity*(0.3+0.7*p/0.15);
+        else alpha = r.opacity*Math.pow(1-(p-0.15)/0.85, 2);
+
+        // 光晕
+        var g = ctx.createRadialGradient(r.x, r.y, r.radius-15, r.x, r.y, r.radius+55);
+        g.addColorStop(0, 'rgba('+r.hue+',0)');
+        g.addColorStop(0.3, 'rgba('+r.hue+','+(alpha*0.55)+')');
+        g.addColorStop(0.6, 'rgba('+r.hue+','+(alpha*0.2)+')');
+        g.addColorStop(1, 'rgba('+r.hue+',0)');
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.radius+55, 0, Math.PI*2);
+        ctx.fillStyle = g; ctx.fill();
+
+        // 主环
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba('+r.hue+','+(alpha*0.9)+')';
+        ctx.lineWidth = 1.5+3*(1-p); ctx.stroke();
+
+        // 伴环
+        if (p<0.5) {
+          ctx.beginPath(); ctx.arc(r.x, r.y, r.radius+28, 0, Math.PI*2);
+          ctx.strokeStyle = 'rgba(255,230,210,'+(alpha*0.3)+')';
+          ctx.lineWidth = 0.9; ctx.stroke();
+        }
+      }
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  // ── 暗室装饰 + 轮播 ──
+  (function initDarkroomDecor() {
+    var strips = [document.getElementById('filmTop'), document.getElementById('filmBtm')];
+    strips.forEach(function(s) {
+      for (var i = 0; i < 28; i++) {
+        var p = document.createElement('span');
+        p.className = 'film-perf';
+        s.appendChild(p);
+      }
+    });
+    // 为每个幻灯片生成微光粒子
+    var sparkContainers = document.querySelectorAll('.carousel-slide .sparkles');
+    sparkContainers.forEach(function(sparkC) {
+      for (var i = 0; i < 20; i++) {
+        var sp = document.createElement('span');
+        sp.className = 'spark';
+        sp.style.cssText =
+          'left:' + (Math.random()*94+3) + '%;top:' + (Math.random()*94+3) + '%;' +
+          '--sd:' + (Math.random()*2+1.5) + 's;--sdelay:' + (Math.random()*3) + 's;' +
+          '--sx:' + (Math.random()*30-15) + 'px;--sy:' + (Math.random()*-20-5) + 'px;';
+        sparkC.appendChild(sp);
+      }
+    });
+
+    // 轮播逻辑
+    var track = document.getElementById('carouselTrack');
+    var dots = document.querySelectorAll('#carDots .dot');
+    var slides = document.querySelectorAll('.carousel-slide .frame-inner');
+    var carCurrentSlide = 0;
+    var totalSlides = slides.length;
+    var startX = 0, movedX = 0, tracking = false;
+
+    // 暴露重置函数
+    window.resetCarousel = function(idx) {
+      idx = idx || 0;
+      carCurrentSlide = idx;
+      track.style.transform = 'translateX(' + (-carCurrentSlide * 100) + '%)';
+      dots.forEach(function(d, i){ d.classList.toggle('active', i === carCurrentSlide); });
+      slides.forEach(function(s){ s.classList.remove('dev'); });
+      setTimeout(function(){ slides[carCurrentSlide].classList.add('dev'); }, 350);
+    };
+
+    function goToSlide(idx) {
+      carCurrentSlide = ((idx % totalSlides) + totalSlides) % totalSlides;
+      track.style.transform = 'translateX(' + (-carCurrentSlide * 100) + '%)';
+      // 点指示器
+      dots.forEach(function(d, i){ d.classList.toggle('active', i === carCurrentSlide); });
+      // 重置显影动画
+      slides.forEach(function(s){ s.classList.remove('dev'); });
+      setTimeout(function(){ slides[carCurrentSlide].classList.add('dev'); }, 300);
+    }
+
+    document.getElementById('carPrev').addEventListener('click', function(){
+      goToSlide(carCurrentSlide - 1);
+    });
+    document.getElementById('carNext').addEventListener('click', function(){
+      goToSlide(carCurrentSlide + 1);
+    });
+    dots.forEach(function(d){
+      d.addEventListener('click', function(){
+        goToSlide(parseInt(d.parentElement === d.parentElement ? Array.prototype.indexOf.call(d.parentElement.children, d) : 0));
+      });
+    });
+
+    // 简单 index 查找
+    dots.forEach(function(d, i){
+      d._idx = i;
+      d.addEventListener('click', function(){ goToSlide(i); });
+    });
+
+    // 触摸滑动
+    var viewport = document.getElementById('carouselViewport');
+    viewport.addEventListener('touchstart', function(e){
+      startX = e.touches[0].clientX; tracking = true;
+      track.style.transition = 'none';
+    }, {passive: true});
+    viewport.addEventListener('touchmove', function(e){
+      if (!tracking) return;
+      movedX = e.touches[0].clientX - startX;
+      track.style.transform = 'translateX(' + (-carCurrentSlide * 100 + (movedX / viewport.offsetWidth) * 100) + '%)';
+    }, {passive: true});
+    viewport.addEventListener('touchend', function(){
+      if (!tracking) return;
+      tracking = false;
+      track.style.transition = 'transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      if (movedX < -40) goToSlide(carCurrentSlide + 1);
+      else if (movedX > 40) goToSlide(carCurrentSlide - 1);
+      else goToSlide(carCurrentSlide);
+      movedX = 0;
+    });
+  })();
+
+  // ── 画廊轮播 ──
+  (function initGalleryCarousel() {
+    var track = document.getElementById('artTrack');
+    var dots = document.querySelectorAll('#artDots .art-dot');
+    var inners = document.querySelectorAll('.art-slide .art-inner');
+    var artIdx = 0, artStartX = 0, artMovedX = 0, artTracking = false;
+
+    function goArtSlide(idx) {
+      artIdx = ((idx % 2) + 2) % 2;
+      track.style.transform = 'translateX(' + (-artIdx * 100) + '%)';
+      dots.forEach(function(d, i){ d.classList.toggle('active', i === artIdx); });
+      inners.forEach(function(s){ s.classList.remove('show'); });
+      setTimeout(function(){ inners[artIdx].classList.add('show'); }, 150);
+    }
+
+    window.resetArtCarousel = function() {
+      artIdx = 0;
+      track.style.transform = 'translateX(0%)';
+      dots.forEach(function(d, i){ d.classList.toggle('active', i === 0); });
+      inners.forEach(function(s){ s.classList.remove('show'); });
+      setTimeout(function(){ inners[0].classList.add('show'); }, 200);
+    };
+
+    document.getElementById('artPrev').addEventListener('click', function(){ goArtSlide(artIdx - 1); });
+    document.getElementById('artNext').addEventListener('click', function(){ goArtSlide(artIdx + 1); });
+    dots.forEach(function(d, i){ d.addEventListener('click', function(){ goArtSlide(i); }); });
+
+    // 触摸滑动
+    var vp = document.getElementById('artViewport');
+    vp.addEventListener('touchstart', function(e){
+      artStartX = e.touches[0].clientX; artTracking = true;
+      track.style.transition = 'none';
+    }, {passive: true});
+    vp.addEventListener('touchmove', function(e){
+      if (!artTracking) return;
+      artMovedX = e.touches[0].clientX - artStartX;
+      track.style.transform = 'translateX(' + (-artIdx * 100 + (artMovedX / vp.offsetWidth) * 100) + '%)';
+    }, {passive: true});
+    vp.addEventListener('touchend', function(){
+      if (!artTracking) return;
+      artTracking = false;
+      track.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      if (artMovedX < -40) goArtSlide(artIdx + 1);
+      else if (artMovedX > 40) goArtSlide(artIdx - 1);
+      else goArtSlide(artIdx);
+      artMovedX = 0;
+    });
+
+    // 初始展示第一张
+    setTimeout(function(){ inners[0].classList.add('show'); }, 300);
+  })();
+
+  // ── 背景星光 ──
+  (function initStarDots() {
+    var container = document.getElementById('starDots');
+    for (var i = 0; i < 50; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'star-dot';
+      var sz = Math.random() * 3 + 1.5;
+      dot.style.cssText =
+        'left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;' +
+        '--sz:' + sz + 'px;' +
+        '--t:' + (Math.random()*4+2.5) + 's;' +
+        '--td:' + (Math.random()*5) + 's;' +
+        '--pk:' + (Math.random()*0.5+0.35) + ';' +
+        '--glow:' + (sz*2) + 'px;' +
+        '--glow2:' + (sz) + 'px;';
+      container.appendChild(dot);
+    }
+  })();
+
+  // ── 飘落花瓣 ──
+  (function initPetals() {
+    var petals = ['🌸','🌷','🌺','💮','🏵','🌼','✿','❀','🪷','🌹','🍂','🍃','🌿'];
+    var pc = document.getElementById('petals');
+    // 主花瓣：70片，延迟大幅缩短，立刻出现
+    for (var i = 0; i < 70; i++) {
+      var p = document.createElement('div');
+      p.className = 'petal' + (i < 25 ? ' fast' : '');
+      p.textContent = petals[Math.floor(Math.random()*petals.length)];
+      p.style.cssText =
+        'left:' + (Math.random()*100) + '%;top:' + (-5-Math.random()*40) + '%;' +
+        '--dur:' + (Math.random()*7+6) + 's;--delay:' + (Math.random()*3) + 's;' +
+        '--size:' + (Math.random()*18+14) + 'px;--rot:' + (Math.random()*720) + 'deg;' +
+        '--drift:' + (Math.random()*140-70) + 'px;';
+      pc.appendChild(p);
+    }
+
+    // 底部堆积花毯
+    var carpet = document.getElementById('fallenCarpet');
+    for (var j = 0; j < 50; j++) {
+      var fp = document.createElement('span');
+      fp.className = 'fallen-petal';
+      fp.textContent = petals[Math.floor(Math.random()*petals.length)];
+      fp.style.cssText =
+        'left:' + (Math.random()*100) + '%;bottom:' + (Math.random()*14) + 'px;' +
+        '--size:' + (Math.random()*14+10) + 'px;' +
+        '--op:' + (Math.random()*0.35+0.15) + ';' +
+        '--rot:' + (Math.random()*60-30) + 'deg;' +
+        '--sway:' + (Math.random()*4+3) + 's;' +
+        '--swdelay:' + (Math.random()*3) + 's;';
+      carpet.appendChild(fp);
+    }
+  })();
+
+  // ── 作者简介 Overlay ──
+  var luluVideo = document.getElementById('luluVideo');
+  var vidPlaying = false;
+
+  window.openAuthor = function() {
+    closeAll();
+    document.getElementById('authorOv').classList.add('active');
+  };
+
+  // ── 视频播放（封面卡 → 播放器）──
+  window.toggleVideo = function() {
+    if (vidPlaying) {
+      // 暂停视频
+      luluVideo.pause();
+      vidPlaying = false;
+      updateVideoUI();
+      return;
+    }
+    // 隐藏封面卡，显示视频播放器，开始播放
+    var card = document.getElementById('videoCard');
+    var wrap = document.getElementById('videoWrap');
+    if (card) card.classList.add('hidden');
+    if (wrap) wrap.classList.add('active');
+    pauseVinylPlayer();
+    pauseMainPlayer();
+    luluVideo.play().then(function() {
+      vidPlaying = true;
+      updateVideoUI();
+    }).catch(function(e) { console.log('视频播放失败:', e); });
+  };
+
+  function updateVideoUI() {
+    var ctrls = document.getElementById('videoControls');
+    var btn = document.getElementById('vidPlayBtn');
+    if (vidPlaying) {
+      if (ctrls) ctrls.classList.add('show');
+      if (btn) btn.textContent = '⏸';
+    } else {
+      if (btn) btn.textContent = '▶';
+    }
+  }
+
+  // 视频进度
+  luluVideo.addEventListener('timeupdate', function() {
+    if (!luluVideo.duration) return;
+    var pct = (luluVideo.currentTime / luluVideo.duration) * 100;
+    var fill = document.getElementById('vidProgressFill');
+    if (fill) fill.style.width = pct + '%';
+    var t = document.getElementById('vidTime');
+    if (t) t.textContent = formatTimeVid(luluVideo.currentTime);
+  });
+
+  luluVideo.addEventListener('ended', function() {
+    vidPlaying = false;
+    updateVideoUI();
+  });
+
+  function formatTimeVid(sec) {
+    sec = Math.floor(sec || 0);
+    return Math.floor(sec/60) + ':' + ('0' + sec%60).slice(-2);
+  }
+
+  window.seekVideo = function(e) {
+    if (!luluVideo.duration) return;
+    var rect = e.currentTarget.getBoundingClientRect();
+    luluVideo.currentTime = ((e.clientX - rect.left) / rect.width) * luluVideo.duration;
+  };
+
+  window.toggleMute = function() {
+    luluVideo.muted = !luluVideo.muted;
+    document.getElementById('vidMuteBtn').textContent = luluVideo.muted ? '🔇' : '🔊';
+  };
+
+  // 更新 closeAll 以停止视频
+  var _origCloseAll = window.closeAll;
+  window.closeAll = function() {
+    // 停止视频
+    if (luluVideo && vidPlaying) {
+      luluVideo.pause();
+      vidPlaying = false;
+      updateVideoUI();
+    }
+    // 重置视频封面和播放器
+    var card = document.getElementById('videoCard');
+    var wrap = document.getElementById('videoWrap');
+    if (card) card.classList.remove('hidden');
+    if (wrap) wrap.classList.remove('active');
+
+    document.querySelectorAll('.overlay').forEach(function(o){ o.classList.remove('active'); });
+    // 重置轮播显影
+    document.querySelectorAll('.carousel-slide .frame-inner').forEach(function(s){ s.classList.remove('dev'); });
+    // 重置画廊
+    document.querySelectorAll('.art-inner').forEach(function(s){ s.classList.remove('show'); });
+    var af = document.getElementById('aboutFrame');
+    if(af) af.classList.remove('show');
+  };
+
+  window.openPanel = function(type) {
+    closeAll();
+    if (type === 'darkroom') {
+      document.getElementById('darkroomOv').classList.add('active');
+      // 重置轮播并触发显影
+      if (window.resetCarousel) window.resetCarousel(0);
+    } else if (type === 'gallery') {
+      document.getElementById('galleryOv').classList.add('active');
+      resetArtCarousel();
+    } else if (type === 'about') {
+      document.getElementById('aboutOv').classList.add('active');
+      setTimeout(function(){ document.getElementById('aboutFrame').classList.add('show'); }, 200);
+    }
+  };
+
+  // ── 留声笔记 ──
+  var vinylAudio = document.getElementById('bgAudio');
+  var vDisc = document.getElementById('vinylDisc');
+  var vArm = document.getElementById('tonearm');
+  var vHint = document.getElementById('playHint');
+  var vinylPlaying = false;
+
+  window.openVinyl = function() {
+    closeAll();
+    document.getElementById('vinylOv').classList.add('active');
+    if (!vinylPlaying) vHint.textContent = '▶ 轻触黑胶，开始播放';
+  };
+
+  window.toggleVinyl = function() {
+    if (vinylPlaying) {
+      vinylAudio.pause();
+      vDisc.classList.remove('playing');
+      vArm.classList.remove('active');
+      vHint.innerHTML = '▶ 轻触黑胶，开始播放';
+      vinylPlaying = false;
+    } else {
+      // 暂停底部播放器和视频，互斥
+      pauseMainPlayer();
+      pauseVideoPlayer();
+      vinylAudio.play().then(function() {
+        vDisc.classList.add('playing');
+        vArm.classList.add('active');
+        vHint.innerHTML = '⏸ 轻触黑胶，暂停播放';
+        vinylPlaying = true;
+      }).catch(function(){ vHint.innerHTML = '⚠ 播放失败，请重试'; });
+    }
+  };
+
+  window.closeVinyl = function() {
+    document.getElementById('vinylOv').classList.remove('active');
+  };
+
+  // 点击黑胶
+  vDisc.addEventListener('click', function(e){ e.stopPropagation(); toggleVinyl(); });
+
+  /* ═══════════════════════════════════════════════════════ */
+  /*  底部高级音乐播放器                                      */
+  /* ═══════════════════════════════════════════════════════════ */
+  /*  底部音乐播放器 — 直接播放，不用 Web Audio，100% 可靠       */
+  /* ═══════════════════════════════════════════════════════════ */
+
+  var mainAudio = document.getElementById('mainAudio');
+  var playlist = [
+    { title: '恋人',             artist: '浪漫收藏集',   src: 'lover.mp3' },
+    { title: '一路向北',         artist: '北方来信',     src: 'north.mp3' },
+    { title: '多远都要在一起',   artist: 'G.E.M. 邓紫棋', src: '多远都要在一起.mp3' }
+  ];
+  var currentTrack = 0;
+  var mainPlaying = false;
+  var expanded = false;
+  var visBars = document.getElementById('visualizer').querySelectorAll('.vis-bar');
+  var animFrame = null;
+  var visPhase = 0;
+
+  // ── CSS 可视化器（不依赖音频数据，纯动画，绝对可靠）──
+  function startVisualizer() {
+    if (animFrame) return;
+    function tick() {
+      visPhase += 0.06;
+      for (var i = 0; i < visBars.length; i++) {
+        var t = visPhase + i * 0.35;
+        // 多个正弦波叠加，模拟频谱的随机感
+        var h;
+        if (mainPlaying) {
+          h = 8 + Math.abs(Math.sin(t) * 28) + Math.abs(Math.sin(t * 3.7 + i) * 18) + Math.abs(Math.cos(t * 1.3) * 12);
+          h = Math.min(h, 76);
+        } else {
+          // 暂停时缓慢回落到最小值
+          var cur = parseFloat(visBars[i].style.height) || 3;
+          h = cur * 0.85 + 3 * 0.15;
+        }
+        visBars[i].style.height = Math.max(3, h) + 'px';
+      }
+      animFrame = requestAnimationFrame(tick);
+    }
+    animFrame = requestAnimationFrame(tick);
+  }
+
+  // ── 加载并播放指定曲目 ──
+  function playTrack(idx) {
+    currentTrack = idx;
+    mainAudio.src = playlist[idx].src;
+    mainAudio.play().catch(function(e){ console.log('播放失败:', e); });
+    updateTrackUI();
+    updatePlaylistActive();
+    updatePlayState();
+  }
+
+  window.switchTrack = function(idx) {
+    pauseVinylPlayer();
+    pauseVideoPlayer();
+    playTrack(idx);
+  };
+
+  window.prevTrack = function() {
+    switchTrack((currentTrack - 1 + playlist.length) % playlist.length);
+  };
+
+  window.nextTrack = function() {
+    switchTrack((currentTrack + 1) % playlist.length);
+  };
+
+  // ── 播放/暂停 ──
+  window.toggleMainPlay = function() {
+    if (mainPlaying) {
+      mainAudio.pause();
+      return;
+    }
+    pauseVinylPlayer();
+    pauseVideoPlayer();
+    if (!mainAudio.src || mainAudio.src === window.location.href) {
+      mainAudio.src = playlist[currentTrack].src;
+    }
+    mainAudio.play().catch(function(e){ console.log('播放失败:', e); });
+  };
+
+  // ── 互斥 ──
+  function pauseMainPlayer() {
+    if (mainPlaying) { mainAudio.pause(); }
+  }
+  function pauseVinylPlayer() {
+    if (vinylPlaying) {
+      vinylAudio.pause();
+      vinylPlaying = false;
+      vDisc.classList.remove('playing');
+      vArm.classList.remove('active');
+      vHint.textContent = '▶ 轻触黑胶，开始播放';
+    }
+  }
+  function pauseVideoPlayer() {
+    if (luluVideo && vidPlaying) {
+      luluVideo.pause();
+      vidPlaying = false;
+      updateVideoUI();
+    }
+  }
+
+  // ── UI 更新 ──
+  function updatePlayState() {
+    var miniBtn = document.getElementById('miniPlayBtn');
+    var mainBtn = document.getElementById('mainPlayBtn');
+    var icon = mainPlaying ? '⏸' : '▶';
+    if (miniBtn) miniBtn.textContent = icon;
+    if (mainBtn) mainBtn.textContent = icon;
+  }
+
+  function updateTrackUI() {
+    var t = playlist[currentTrack];
+    document.getElementById('miniTitle').textContent = t.title;
+    document.getElementById('miniArtist').textContent = t.artist;
+    document.getElementById('expandTitle').textContent = t.title;
+    document.getElementById('expandArtist').textContent = t.artist;
+  }
+
+  function updatePlaylistActive() {
+    document.querySelectorAll('.playlist-item').forEach(function(item, i) {
+      item.classList.toggle('active', i === currentTrack);
+    });
+  }
+
+  // ── 进度条 ──
+  function formatTime(sec) {
+    sec = Math.floor(sec || 0);
+    return Math.floor(sec/60) + ':' + ('0' + sec%60).slice(-2);
+  }
+
+  mainAudio.addEventListener('timeupdate', function() {
+    if (!mainAudio.duration) return;
+    var pct = (mainAudio.currentTime / mainAudio.duration) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressThumb').style.left = pct + '%';
+    document.getElementById('miniProgressBar').style.width = pct + '%';
+    document.getElementById('curTime').textContent = formatTime(mainAudio.currentTime);
+  });
+
+  mainAudio.addEventListener('loadedmetadata', function() {
+    document.getElementById('durTime').textContent = formatTime(mainAudio.duration);
+    var items = document.querySelectorAll('.playlist-item');
+    if (items[currentTrack]) {
+      items[currentTrack].querySelector('.pl-dur').textContent = formatTime(mainAudio.duration);
+    }
+  });
+
+  mainAudio.addEventListener('ended', function() { nextTrack(); });
+
+  mainAudio.addEventListener('play', function() {
+    mainPlaying = true;
+    updatePlayState();
+    startVisualizer();
+  });
+
+  mainAudio.addEventListener('pause', function() {
+    mainPlaying = false;
+    updatePlayState();
+  });
+
+  window.seekTo = function(e) {
+    if (!mainAudio.duration) return;
+    var rect = e.currentTarget.getBoundingClientRect();
+    mainAudio.currentTime = ((e.clientX - rect.left) / rect.width) * mainAudio.duration;
+  };
+
+  // 初始加载第一首的 src（不播放）
+  mainAudio.src = playlist[0].src;
+  startVisualizer();
+
+  // 播放器展开/收起
+  window.expandPlayer = function() {
+    if (expanded) return;
+    expanded = true;
+    document.getElementById('miniPlayer').classList.add('expanded');
+    startVisualizer();
+  };
+
+  window.collapsePlayer = function() {
+    expanded = false;
+    document.getElementById('miniPlayer').classList.remove('expanded');
+  };
+
+
+  // ── 键盘 ──
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeAll(); collapsePlayer(); }
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.code === 'Space') { e.preventDefault(); toggleMainPlay(); }
+  });
+
+  // ── 页面卸载 ──
+  window.addEventListener('beforeunload', function() {
+    mainAudio.pause();
+    vinylAudio.pause();
+  });
+})();
+</script>
+
+</body>
+</html>
